@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import random
@@ -12,7 +11,6 @@ CSV_PATH     = Path(__file__).parent / "thai_sentences.csv"
 
 @st.cache_resource
 def load_data() -> pd.DataFrame:
-    """優先讀 Parquet；若無則讀 CSV，並嘗試轉存 Parquet。"""
     if PARQUET_PATH.exists():
         return pd.read_parquet(PARQUET_PATH)
     df = pd.read_csv(CSV_PATH)
@@ -24,7 +22,7 @@ def load_data() -> pd.DataFrame:
 
 input_df = load_data()
 
-# ---------- 2) 隨機器 & 干擾池 ----------
+# ---------- 2) 隨機器與干擾池 ----------
 rng        = random.Random()
 POOL_SIZE  = min(500, len(input_df))
 TH_POOL    = rng.sample(input_df["泰文"].tolist(), POOL_SIZE)
@@ -36,8 +34,7 @@ defaults = dict(
     input_index=rng.randrange(len(input_df)),
     ct_index=rng.randrange(len(input_df)),
     tc_index=rng.randrange(len(input_df)),
-    answered=False,
-    user_input="",
+    answered=False, user_input="",
     ct_options=None, ct_correct=None, ct_answered=False,
     tc_options=None, tc_correct=None, tc_answered=False,
 )
@@ -65,12 +62,12 @@ def get_or_create_options(opt_key, ans_key, correct, pool, k=3):
         st.session_state[ans_key] = correct
     return st.session_state[opt_key], st.session_state[ans_key]
 
-# ---------- 5) 版面 ----------
+# ---------- 5) UI ----------
 st.title("📘 泰文練習 App")
 modes = ["整句輸入", "選擇題（中揀泰）", "選擇題（泰揀中）"]
-mode  = st.radio("請選擇練習模式：", modes, index=modes.index(st.session_state.mode))
+mode  = st.radio("請選擇練習模式：", modes,
+                 index=modes.index(st.session_state.mode))
 
-# 切 mode 重置局部狀態
 if mode != st.session_state.mode:
     st.session_state.update(
         answered=False, user_input="",
@@ -87,13 +84,14 @@ if mode == "整句輸入":
 
     with st.form("input_form"):
         input_method = st.radio("你想輸入：", ["泰文", "羅馬拼音"], key="method")
-        user_input   = st.text_input("✍️ 請輸入你的答案：",
-                                     value=st.session_state.user_input, key="input")
-        submitted = st.form_submit_button("✅ 送出答案")
+        user_input   = st.text_input("✍️ 請輸入你的答案：", key="input")
+        submitted    = st.form_submit_button("✅ 送出答案")
 
     if submitted and user_input.strip():
         st.session_state.update(
-            answered=True, user_input=user_input, input_method=input_method
+            answered=True,
+            user_input=user_input,
+            input_method=input_method
         )
 
     if st.session_state.answered:
@@ -109,8 +107,9 @@ if mode == "整句輸入":
         if not st.session_state.answered:
             st.warning("請先作答並送出，再下一題！")
         else:
-            st.session_state.update(input_index=rng.randrange(len(input_df)),
-                                    answered=False, user_input="")
+            st.session_state.input_index = rng.randrange(len(input_df))
+            st.session_state.update(answered=False, user_input="")
+            st.session_state.pop("input", None)   # 清空輸入框
             st.rerun()
 
 # ---------- B. 選擇題（中揀泰） ----------
