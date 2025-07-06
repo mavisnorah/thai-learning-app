@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import pandas as pd
 import random
@@ -22,11 +23,11 @@ def load_data() -> pd.DataFrame:
 
 input_df = load_data()
 
-# ---------- 2) 隨機器與干擾池 ----------
-rng        = random.Random()
-POOL_SIZE  = min(500, len(input_df))
-TH_POOL    = rng.sample(input_df["泰文"].tolist(), POOL_SIZE)
-CH_POOL    = rng.sample(input_df["中文句子"].tolist(), POOL_SIZE)
+# ---------- 2) 隨機器 & 干擾池 ----------
+rng = random.Random()
+POOL_SIZE = min(500, len(input_df))
+TH_POOL   = rng.sample(input_df["泰文"].tolist(), POOL_SIZE)
+CH_POOL   = rng.sample(input_df["中文句子"].tolist(), POOL_SIZE)
 
 # ---------- 3) session_state ----------
 defaults = dict(
@@ -62,11 +63,10 @@ def get_or_create_options(opt_key, ans_key, correct, pool, k=3):
         st.session_state[ans_key] = correct
     return st.session_state[opt_key], st.session_state[ans_key]
 
-# ---------- 5) UI ----------
+# ---------- 5) 版面 ----------
 st.title("📘 泰文練習 App")
 modes = ["整句輸入", "選擇題（中揀泰）", "選擇題（泰揀中）"]
-mode  = st.radio("請選擇練習模式：", modes,
-                 index=modes.index(st.session_state.mode))
+mode  = st.radio("請選擇練習模式：", modes, index=modes.index(st.session_state.mode))
 
 if mode != st.session_state.mode:
     st.session_state.update(
@@ -82,9 +82,12 @@ if mode == "整句輸入":
     st.subheader("🧠 中文句子：")
     st.write(row["中文句子"])
 
+    # ★ 每題產生唯一 key → 換題時輸入框自然重置
+    input_key = f"input_{st.session_state.input_index}"
+
     with st.form("input_form"):
         input_method = st.radio("你想輸入：", ["泰文", "羅馬拼音"], key="method")
-        user_input   = st.text_input("✍️ 請輸入你的答案：", key="input")
+        user_input   = st.text_input("✍️ 請輸入你的答案：", key=input_key)
         submitted    = st.form_submit_button("✅ 送出答案")
 
     if submitted and user_input.strip():
@@ -109,7 +112,6 @@ if mode == "整句輸入":
         else:
             st.session_state.input_index = rng.randrange(len(input_df))
             st.session_state.update(answered=False, user_input="")
-            st.session_state.pop("input", None)   # 清空輸入框
             st.rerun()
 
 # ---------- B. 選擇題（中揀泰） ----------
