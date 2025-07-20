@@ -1,0 +1,4 @@
+streamlit
+pandas
+googletrans==4.0.0-rc1
+python-dateutil        # already in most images, but safe to list
