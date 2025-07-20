@@ -256,7 +256,7 @@ elif mode == "單字輸入（中→泰）":
     idx = st.session_state.wd_index
     row = input_df.iloc[idx]
     zh_word = pick_word(row["中文句子"])
-    st.subheader("🈶️ 中文生字：")
+    st.subheader("中文生字：")
     st.write(zh_word)
 
     ans = st.text_input("✍️ 請輸入泰文：", key=f"wd_{idx}")
